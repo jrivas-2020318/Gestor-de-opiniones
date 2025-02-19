@@ -24,12 +24,13 @@ export const register = async(req, res)=>{
     }
 }
 
-export const login = async(req, res)=>{
+export const login = async (req, res) => {
     try {
-        let { username, password } = req.body;
-        let user = await User.findOne({ username });
-
-        if (user && await checkPassword(user.password, password)) {
+        let { username, email, password } = req.body;
+        let user = await User.findOne({ 
+            $or: [{ username }, { email }]
+        });
+        if (user && await checkPassword(password, user.password)) {
             let loggedUser = { 
                 id: user._id, 
                 name: user.name,
@@ -38,14 +39,14 @@ export const login = async(req, res)=>{
             };
             let token = await generateJwt(loggedUser);
             return res.send({
-                message: `W elcome ${user.name}`,
+                message: `Welcome ${user.name}`,
                 loggedUser,
                 token
             });
         }
-        return res.status(400).send({ message: 'Wrong email or password' });
+        return res.status(400).send({ message: 'Invalid username, email, or password' });
     } catch (err) {
-        console.error(err);
-        return res.status(500).send({ message: 'General error with login function' });
+        console.error("❌ Error in login function:", err);
+        return res.status(500).send({ message: 'Internal server error' });
     }
 }
