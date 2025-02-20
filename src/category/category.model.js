@@ -12,6 +12,13 @@ const categorySchema = new Schema({
     description: { 
         type: String 
     },
+
+    isDefault: { 
+        type: Boolean, 
+        default: false,
+        required: true
+    }
 })
+
 
 export default model("Category", categorySchema)

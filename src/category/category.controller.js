@@ -1,4 +1,5 @@
 import Category from "../category/category.model.js"
+import Post from "../post/post.model.js"
 
 export const save = async (req, res) => {
     const data = req.body
@@ -102,33 +103,24 @@ export const update = async (req, res) => {
 
 export const deleteCategory = async (req, res) => {
     try {
-        const { id } = req.params;
-        if (!req.user || req.user.role !== "ADMIN") {
-            return res.status(403).send({ success: false, message: "Access denied: Only the administrator can delete categories" });
-        }
-        const category = await Category.findById(id);
-        if (!category) {
-            return res.status(404).send({ success: false, message: "Category not found" });
-        }
-        const defaultCategory = await Category.findOne({ isDefault: true });
-        if (id === defaultCategory._id.toString()) {
-            return res.status(400).send({ success: false, message: "Cannot delete the default category" });
-        }
-        const productCount = await Product.countDocuments({ category: id });
-        if (productCount > 0) {
-            await Product.updateMany({ category: id }, { category: defaultCategory._id });
-        }
-        await Category.findByIdAndDelete(id);
-        return res.send({ 
-            success: true, 
-            message: productCount > 0 
-                ? "Category deleted successfully, and products reassigned to the default category" 
-                : "Category deleted successfully (no products to reassign)"
-        });
+        const { id } = req.params
+        const category = await Category.findById(id)
+        if (!category) return res.status(404).send({ success: false, message: "Category not found" })
+        const defaultCategory = await Category.findOne({ isDefault: true }).lean()
+        if (!defaultCategory) return res.status(500).send({ success: false, message: "Default category not found" })
+        if (id === defaultCategory._id.toString()) 
+            return res.status(400).send({ success: false, message: "Cannot delete the default category" })
+        const postCount = await Post.countDocuments({ category: id });
+        if (postCount) await Post.updateMany({ category: id }, { category: defaultCategory._id })
+        await Category.findByIdAndDelete(id)
+        return res.send({
+            success: true,
+            message: postCount 
+                ? `Category deleted, ${postCount} posts reassigned to the default category`
+                : "Category deleted successfully"
+        })
     } catch (err) {
         console.error("❌ Error deleting category:", err);
-        return res.status(500).send({ success: false, message: "Error deleting category", error: err.message || err });
+        return res.status(500).send({ success: false, message: "Error deleting category", error: err.message || err })
     }
 }
-
-

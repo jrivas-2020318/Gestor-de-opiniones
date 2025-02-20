@@ -11,7 +11,7 @@ export const connect = async()=>{
         })
         mongoose.connection.on('connected', async()=>{
             console.log('MongoDB | connected to mongodb')
-            await createDefaultCategory()
+            await defaultCategory()
         })
         mongoose.connection.once('open', ()=>{
             console.log('MongoDB | connected to database')
@@ -34,24 +34,30 @@ export const connect = async()=>{
     }
 }
 
-const createDefaultCategory = async () => {
+const defaultCategory = async () => {
     try {
-        const defaultCategory = await Category.findOne({ isDefault: true }) || await Category.findOne({ name: "Sin categoría" })
-        if (defaultCategory) {
-            console.log("✅ Categoría predeterminada ya existe")
-            return
+        let defaultCategory = await Category.findOne({ isDefault: true });
+        if (!defaultCategory) {
+            defaultCategory = await Category.findOne({ name: "Sin categoría" });
         }
-        await Category.create({ 
-            name: "Sin categoría", 
-            description: "Productos sin categoría", 
-            isDefault: true 
-        })
-        console.log("✅ Categoría predeterminada creada exitosamente")   
-    } catch (err) {
-        if (err.code === 11000) {
-            console.log("⚠️ Se intentó crear una categoría duplicada, pero ya existe. No se realizaron cambios.")
+        // Si la categoría existe pero no tiene `isDefault: true`, la actualiza
+        if (defaultCategory && !defaultCategory.isDefault) {
+            await Category.findByIdAndUpdate(defaultCategory._id, { isDefault: true });
+            console.log("✅ Categoría existente marcada como predeterminada");
+        } 
+        if (!defaultCategory) {
+            await Category.create({
+                name: "Sin categoría",
+                description: "Productos sin categoría",
+                isDefault: true
+            });
+            console.log("✅ Categoría predeterminada creada exitosamente");
         } else {
-            console.error("❌ Error al verificar o crear la categoría predeterminada:", err)
+            console.log("✅ Categoría predeterminada ya existe");
         }
+    } catch (err) {
+        console.error("❌ Error al verificar o crear la categoría predeterminada:", err);
     }
-}
+};
+
+
