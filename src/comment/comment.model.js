@@ -1,29 +1,21 @@
-import { Schema, model } from "mongoose";
+import { Schema, model } from "mongoose"
 
-const postSchema = new Schema({
-    title: {
+const commentSchema = new Schema({
+    content: {
         type: String,
         required: true,
         trim: true
     },
 
-    content: {
-        type: String,
+    author: {
+        type: Schema.Types.ObjectId,
+        ref: "User", 
         required: true
     },
 
-    author: {
+    post: {
         type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-    comments: [{
-        type: Schema.Types.ObjectId,
-        ref: "Comment"
-    }],
-    category: {
-        type: Schema.Types.ObjectId,
-        ref: "Category", 
+        ref: "Post", 
         required: true
     },
 
@@ -36,6 +28,6 @@ const postSchema = new Schema({
         type: Date,
         default: Date.now
     }
-});
+})
 
-export default model("Post", postSchema)
+export default model("Comment", commentSchema)
