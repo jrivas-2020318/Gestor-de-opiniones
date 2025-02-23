@@ -3,7 +3,6 @@ import User from "../user/user.model.js";
 import { checkPassword, encrypt } from "../../utils/encrypt.js";
 import { generateJwt } from "../../utils/jwt.js";
 
-//Registar
 export const register = async(req, res)=>{
     try{
         let data = req.body

@@ -16,11 +16,12 @@ export const registerValidator = [
     body('email', 'Email cannot be empty').notEmpty().isEmail(),
     body('password', 'Password cannot be empty').notEmpty().isStrongPassword()
     .withMessage("The password must be strong").isLength({min: 8}),
+    
     body('phone', 'Phone cannot be empty').notEmpty().isMobilePhone(),
     validateErrors
 ]
 
-export const updateUser = [
+export const updateUserValidator = [
     body('name', 'Name cannot be empty').optional(),
     body('lastname', 'Lastname cannot be empty').optional(),
     body('username', 'Username cannot be empty').optional(),
@@ -29,42 +30,43 @@ export const updateUser = [
     validateErrors
 ]
 
-export const createCategory = [
+export const createCategoryValidator = [
     body('name', 'Name cannot be empty').notEmpty(),
     body('description', 'Description cannot be empty').notEmpty(),
     validateErrors
 ]
 
-export const updateCategory = [
+export const updateCategoryValidator = [
     body('name', 'Name cannot be empty').optional(),
     body('description', 'Description cannot be empty').optional(),
     validateErrors
 ]
 
-export const createPost = [
+export const createPostValidator = [
     body('title', 'Title cannot be empty').notEmpty(),
     body('content', 'Content cannot be empty').notEmpty(),
     body('category', 'Category cannot be empty').notEmpty(),
     validateErrors
 ]
 
-export const updatePost = [
+export const updatePostValidator = [
     body('title', 'Title cannot be empty').optional(),
     body('content', 'Content cannot be empty').optional(),
     body('category', 'Category cannot be empty').optional(),
     validateErrors
 ]
 
-export const createComment = [
+export const createCommentValidator = [
     body('content', 'Content cannot be empty').notEmpty(),
     body('post', 'Post cannot be empty').notEmpty(),
     validateErrors
 ]
 
-export const updateComment = [
+export const updateCommentValidator = [
     body('content', 'Content cannot be empty').optional(),
     validateErrors
 ]   
+
 
 
 

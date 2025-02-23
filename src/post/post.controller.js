@@ -1,5 +1,6 @@
 import Post from "../post/post.model.js"
 import Category from "../category/category.model.js"
+import Comment from "../comment/comment.model.js"
 
 export const createPost = async (req, res) => {
     try {
@@ -19,22 +20,37 @@ export const createPost = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
     try {
+        const { page = 1, limit = 10 } = req.query
+        const skip = (page - 1) * limit
+
         const posts = await Post.find()
+            .skip(skip)
+            .limit(limit)
             .populate({
                 path: 'comments',
+                match: { isActive: true }, 
                 populate: {
-                    path: 'author', 
+                    path: 'author',
                     select: 'name -_id'
                 }
-            })  
+            })
+        const totalPosts = await Post.countDocuments()
 
-        return res.send({ success: true, message: "Posts retrieved successfully", posts })
+        return res.send({
+            success: true,
+            message: "Posts retrieved successfully",
+            posts,
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(totalPosts / limit),
+            pageSize: parseInt(limit)
+        });
 
     } catch (err) {
         console.error("❌ Error retrieving posts:", err)
         return res.status(500).send({ success: false, message: "Error retrieving posts", error: err.message })
     }
 }
+
 
 export const getPostById = async (req, res) => {
     try {
@@ -79,25 +95,36 @@ export const updatePost = async (req, res) => {
     }
 }
 
+
 export const deletePost = async (req, res) => {
     try {
-        const { id } = req.params
-        const userId = req.user.id
+        const { id } = req.params;
+        const userId = req.user.id;
 
-        const post = await Post.findById(id)
+        const post = await Post.findById(id);
         if (!post) {
-            return res.status(404).send({ success: false, message: "Post not found" })
+            return res.status(404).send({ success: false, message: "Post not found" });
         }
 
         if (post.author.toString() !== userId) {
-            return res.status(403).send({ success: false, message: "You can only delete your own posts" })
+            return res.status(403).send({ success: false, message: "You can only delete your own posts" });
         }
 
-        await Post.findByIdAndDelete(id)
-        return res.send({ success: true, message: "Post deleted successfully" })
+        // Aquí se maneja la desactivación del post y sus comentarios en vez de borrarlos físicamente
+        // Actualiza el estado del post a 'false'
+        await Post.findByIdAndUpdate(id, { isActive: false }); // Asume que tienes un campo 'isActive' en el esquema de Post
+        
+        // Actualiza el estado de todos los comentarios asociados a este post también a 'false'
+        await Comment.updateMany({ post: id }, { isActive: false }); // Asume que tienes un campo 'isActive' en el esquema de Comment
+
+        return res.send({ success: true, message: "Post and all associated comments set to inactive successfully" });
 
     } catch (err) {
-        console.error("❌ Error deleting post:", err)
-        return res.status(500).send({ success: false, message: "Error deleting post", error: err.message })
+        console.error("❌ Error deleting post:", err);
+        return res.status(500).send({
+            success: false,
+            message: "Error deleting post",
+            error: err.message
+        });
     }
-}
+};

@@ -4,13 +4,15 @@ const categorySchema = new Schema({
 
     name: {
         type: String,
-        required: true,
+        required: [true, "Name is required"],
         unique: true,
-        trim: true
+        trim: true,
+        maxLegnth: [15, "Can't be more than 15 characters"],
     },
 
     description: { 
-        type: String 
+        type: String,
+        maxLegnth: [150, "Can't be more than 150 characters"],
     },
 
     isDefault: { 
@@ -19,6 +21,5 @@ const categorySchema = new Schema({
         required: true
     }
 })
-
 
 export default model("Category", categorySchema)

@@ -17,7 +17,6 @@ export const createComment = async (req, res) => {
     res.status(201).send({ success: true, message: "Comment created", comment: newComment })
 }
 
-
 export const getCommentsByPost = async (req, res) => {
     try {
         const { postId } = req.params
@@ -34,15 +33,40 @@ export const getCommentsByPost = async (req, res) => {
 
 export const getAllComments = async (req, res) => {
     try {
-        const userId = req.user.id;  // Asumiendo que 'req.user.id' contiene el ID del usuario logueado
-        const comments = await Comment.find({ author: userId })
-                                      .populate('post', 'title description')  // Añadimos detalles del post
-                                      .populate('author', 'name email');  // Añadimos detalles del autor
+        const { page = 1, limit = 15 } = req.query
+        const skip = (page - 1) * limit
 
-        return res.send({ success: true, message: "Comments retrieved successfully", comments });
+        const userId = req.user.id
+        const comments = await Comment.find({ author: userId, isActive: true }) 
+            .skip(skip) 
+            .limit(limit) 
+            .populate('post', 'title description') 
+            .populate('author', 'name email')
+
+        const totalComments = await Comment.countDocuments({ author: userId, isActive: true }); 
+        if (comments.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: "No active comments found."
+            })
+        }
+        return res.send({
+            success: true,
+            message: "Comments retrieved successfully",
+            comments,
+            totalComments,
+            totalPages: Math.ceil(totalComments / limit),
+            currentPage: parseInt(page),
+            pageSize: parseInt(limit)
+        })
+        
     } catch (err) {
         console.error("❌ Error retrieving comments:", err);
-        return res.status(500).send({ success: false, message: "Error retrieving comments", error: err.message });
+        return res.status(500).send({
+            success: false,
+            message: "Error retrieving comments",
+            error: err.message
+        });
     }
 }
 

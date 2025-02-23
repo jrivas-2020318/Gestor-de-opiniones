@@ -3,19 +3,21 @@ import { Schema, model } from "mongoose";
 const postSchema = new Schema({
     title: {
         type: String,
-        required: true,
-        trim: true
+        required: [true, "Title is required"], 
+        trim: true,
+        maxLegnth: [150, "Can't be more than 150 characters"]
     },
 
     content: {
         type: String,
-        required: true
+        required: [true, "Content is required"],
+        maxLegnth: [400, "Content too long"]
     },
 
     author: {
         type: Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: [true, "Author is required"]
     },
     comments: [{
         type: Schema.Types.ObjectId,
@@ -24,7 +26,7 @@ const postSchema = new Schema({
     category: {
         type: Schema.Types.ObjectId,
         ref: "Category", 
-        required: true
+        required: [true, "Category is required"]
     },
 
     createdAt: {

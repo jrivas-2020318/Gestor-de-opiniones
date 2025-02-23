@@ -28,30 +28,42 @@ export const save = async (req, res) => {
 }
 
 export const getAll = async (req, res) => {
-    const { limit, skip } = req.query
     try {
-        const categories = await Category.find().skip(skip).limit(limit)
+        const { page = 1, limit = 20 } = req.query
+        const skip = (page - 1) * limit
+
+        const categories = await Category.find()
+            .skip(skip) 
+            .limit(limit); 
+
+        const totalCategories = await Category.countDocuments()
+
         if (categories.length === 0) {
             return res.status(404).send({
                 success: false,
                 message: 'Categories not found.'
-            })
+            });
         }
+
         return res.send({
             success: true,
-            message: 'Categories found.:',
-            total: categories.length,
-            categories
+            message: 'Categories found.',
+            categories,
+            total: totalCategories, 
+            totalPages: Math.ceil(totalCategories / limit), 
+            currentPage: parseInt(page), 
+            pageSize: parseInt(limit) 
         })
     } catch (err) {
-        console.error(err)
+        console.error("❌ Error retrieving categories:", err)
         return res.status(500).send({
             success: false,
             message: 'Error retrieving categories.',
-            err
+            error: err.message
         })
     }
 }
+
 
 
 export const get = async (req, res) => {
