@@ -5,9 +5,6 @@ export const createPost = async (req, res) => {
     try {
         const { title, content, category } = req.body
         const author = req.user.id 
-        if (!title || !content || !category) {
-            return res.status(400).send({ success: false, message: "Title, content, and category are required" })
-        }
         const categoryExists = await Category.findById(category)
         if (!categoryExists) {
             return res.status(404).send({ success: false, message: "Category not found" })
@@ -22,7 +19,15 @@ export const createPost = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
     try {
-        const posts = await Post.find().populate("author", "username").populate("category", "name")
+        const posts = await Post.find()
+            .populate({
+                path: 'comments',
+                populate: {
+                    path: 'author', 
+                    select: 'name -_id'
+                }
+            })  
+
         return res.send({ success: true, message: "Posts retrieved successfully", posts })
 
     } catch (err) {

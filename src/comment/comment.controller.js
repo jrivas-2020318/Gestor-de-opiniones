@@ -2,32 +2,27 @@ import Comment from "../comment/comment.model.js"
 import Post from "../post/post.model.js"
 
 export const createComment = async (req, res) => {
-    try {
-        const { postId, content } = req.body
-        const author = req.user.id 
+    const data = req.body
+    const author = req.user.id
 
-        if (!postId || !content) {
-            return res.status(400).send({ success: false, message: "Post ID and content are required" })
-        }
+    // Verificar que el post exista en la base de datos
+    const postExists = await Post.findById(data.post)
+    if (!postExists) return res.status(404).send({ success: false, message: "Post not found" })
 
-        const postExists = await Post.findById(postId)
-        if (!postExists) {
-            return res.status(404).send({ success: false, message: "Post not found" })
-        }
+    const newComment = new Comment({ author, ...data })
+    await newComment.save()
 
-        const newComment = await Comment.create({ content, author, post: postId })
-        return res.status(201).send({ success: true, message: "Comment created successfully", comment: newComment })
-
-    } catch (err) {
-        console.error("❌ Error creating comment:", err)
-        return res.status(500).send({ success: false, message: "Error creating comment", error: err.message })
-    }
+    postExists.comments.push(newComment._id) 
+    await postExists.save()  
+    res.status(201).send({ success: true, message: "Comment created", comment: newComment })
 }
+
 
 export const getCommentsByPost = async (req, res) => {
     try {
         const { postId } = req.params
-        const comments = await Comment.find({ post: postId }).populate("author", "username")
+        const comments = await Comment.find({ post: postId })
+        .populate("post", "title -_id")
 
         return res.send({ success: true, message: "Comments retrieved successfully", comments })
 
@@ -36,6 +31,21 @@ export const getCommentsByPost = async (req, res) => {
         return res.status(500).send({ success: false, message: "Error retrieving comments", error: err.message })
     }
 }
+
+export const getAllComments = async (req, res) => {
+    try {
+        const userId = req.user.id;  // Asumiendo que 'req.user.id' contiene el ID del usuario logueado
+        const comments = await Comment.find({ author: userId })
+                                      .populate('post', 'title description')  // Añadimos detalles del post
+                                      .populate('author', 'name email');  // Añadimos detalles del autor
+
+        return res.send({ success: true, message: "Comments retrieved successfully", comments });
+    } catch (err) {
+        console.error("❌ Error retrieving comments:", err);
+        return res.status(500).send({ success: false, message: "Error retrieving comments", error: err.message });
+    }
+}
+
 
 export const updateComment = async (req, res) => {
     try {
