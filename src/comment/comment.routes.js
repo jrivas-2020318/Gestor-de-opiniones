@@ -9,6 +9,6 @@ api.post("/createComment", [validateJwt, createCommentValidator], createComment)
 api.get("/getall", [validateJwt], getAllComments) 
 api.get("/:postId", [validateJwt, ], getCommentsByPost)  
 api.put("/:id", [validateJwt, updateCommentValidator, isAdmin], updateComment)
-api.delete("/deleteComment/:id", [validateJwt, isAdmin], deleteComment)
+api.delete("/deleteComment/:id", [validateJwt, isAdmin], deleteComment) 
 
 export default api
